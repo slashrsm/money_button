@@ -25,7 +25,7 @@ defmodule MoneyButton.Payment do
   ]
 
   @typedoc """
-  A MoneyButton access token.
+  A MoneyButton payment.
   """
   defstruct [
     :id,
@@ -87,6 +87,9 @@ defmodule MoneyButton.Payment do
           user_id: non_neg_integer()
         }
 
+  @doc """
+  Creates a payment from the raw input (as delivered by the API).
+  """
   @spec create(map()) :: __MODULE__.t()
   def create(%{"id" => payment_id, "attributes" => raw_payment, "type" => "payments"}) do
     to_struct = fn data -> struct!(__MODULE__, data) end
