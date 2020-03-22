@@ -651,4 +651,48 @@ defmodule MoneyButtonTest do
 
     assert MoneyButton.get_profile(access_token, 99) == {:ok, expected_profile}
   end
+
+  test_with_mock "get_balance/2", HTTPoison,
+    get: fn
+      "https://www.moneybutton.com/api/v1/users/99/balance",
+      [
+        {"Authorization",
+         "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"},
+        {"Content-Type", "application/x-www-form-urlencoded"}
+      ] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "data" => %{
+                 "attributes" => %{
+                   "amount" => 12.3456,
+                   "currency" => "USD",
+                   "satoshis" => "67890"
+                 },
+                 "id" => "fa7f9720-c51d-11e9-8504-8bc4464406ab",
+                 "type" => "amounts"
+               }
+             })
+         }}
+    end do
+    access_token = %MoneyButton.AccessToken{
+      expires_at: DateTime.from_unix!(:os.system_time(:second) + 3600),
+      scope: :user_identity,
+      token:
+        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw",
+      token_type: :bearer
+    }
+
+    expected_balance = %MoneyButton.Balance{
+      amount: 12.3456,
+      currency: "USD",
+      satoshis: 67_890
+    }
+
+    assert MoneyButton.get_balance!(access_token, 99) == expected_balance
+
+    assert MoneyButton.get_balance(access_token, 99) == {:ok, expected_balance}
+  end
 end
