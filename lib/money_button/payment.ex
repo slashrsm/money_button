@@ -4,6 +4,7 @@ defmodule MoneyButton.Payment do
   """
 
   @enforce_keys [
+    :id,
     :amount_usd,
     :amount,
     :change_amount_satoshis,
@@ -27,6 +28,7 @@ defmodule MoneyButton.Payment do
   A MoneyButton access token.
   """
   defstruct [
+    :id,
     :amount_usd,
     :browser_user_agent,
     :amount,
@@ -56,6 +58,7 @@ defmodule MoneyButton.Payment do
   ]
 
   @type t :: %__MODULE__{
+          id: non_neg_integer(),
           amount_usd: float(),
           browser_user_agent: String.t(),
           amount: float(),
@@ -85,7 +88,9 @@ defmodule MoneyButton.Payment do
         }
 
   @spec create(map()) :: __MODULE__.t()
-  def create(%{"id" => _payment_id, "attributes" => raw_payment, "type" => "payments"}) do
+  def create(%{"id" => payment_id, "attributes" => raw_payment, "type" => "payments"}) do
+    to_struct = fn data -> struct!(__MODULE__, data) end
+
     raw_payment
     |> Enum.into(%{}, fn {key, value} ->
       {
@@ -98,6 +103,8 @@ defmodule MoneyButton.Payment do
     |> convert_referrer_url()
     |> convert_integer()
     |> convert_float()
+    |> Map.put(:id, String.to_integer(payment_id))
+    |> to_struct.()
   end
 
   defp convert_date(%{created_at: date} = payment) do
