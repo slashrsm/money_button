@@ -49,6 +49,42 @@ defmodule MoneyButton do
   end
 
   @doc """
+  Authenticate as user.
+
+  This function will raise an exception in case of an error.
+  """
+  @spec auth_as_user!(String.t(), String.t(), String.t()) :: AccessToken.t()
+  def auth_as_user!(oauth_client_id, authorization_code, redirect_uri) do
+    {:ok, %HTTPoison.Response{status_code: 200, body: tokens}} =
+      HTTPoison.post(
+        @url <> "/oauth/v1/token",
+        URI.encode_query(%{
+          grant_type: "authorization_code",
+          code: authorization_code,
+          redirect_uri: redirect_uri,
+          client_id: oauth_client_id
+        }),
+        [{"Content-Type", "application/x-www-form-urlencoded"}]
+      )
+
+    tokens
+    |> Jason.decode!()
+    |> AccessToken.create()
+  end
+
+  @doc """
+  Authenticate as a user.
+  """
+  @spec auth_as_user(String.t(), String.t(), String.t()) ::
+          {:ok, AccessToken.t()} | {:error, String.t()}
+  def auth_as_user(oauth_client_id, authorization_code, redirect_uri) do
+    {:ok, auth_as_user!(oauth_client_id, authorization_code, redirect_uri)}
+  rescue
+    MatchError -> {:error, "Authorization request failed."}
+    _ -> {:error, "Unable to authorize."}
+  end
+
+  @doc """
   Get all payments for an application.
 
   This function will raise an exception in case of an error.

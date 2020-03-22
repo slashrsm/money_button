@@ -51,26 +51,6 @@ defmodule MoneyButtonTest do
     response = MoneyButton.auth_as_application!(@client_id, @client_secret)
     %MoneyButton.AccessToken{} = response
 
-    expected = %MoneyButton.AccessToken{
-      expires_at: DateTime.from_unix!(:os.system_time(:second) + 3600),
-      scope: :application_write,
-      token:
-        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw",
-      token_type: :bearer
-    }
-
-    assert response.scope == expected.scope
-    assert response.token_type == expected.token_type
-    assert response.token == expected.token
-    assert response.expires_at.year == expected.expires_at.year
-    assert response.expires_at.month == expected.expires_at.month
-    assert response.expires_at.day == expected.expires_at.day
-    assert response.expires_at.hour == expected.expires_at.hour
-    assert response.expires_at.minute == expected.expires_at.minute
-
-    {:ok, response} = MoneyButton.auth_as_application(@client_id, @client_secret)
-    %MoneyButton.AccessToken{} = response
-
     assert response.scope == :application_write
     assert response.token_type == :bearer
 
@@ -84,7 +64,7 @@ defmodule MoneyButtonTest do
     assert response.expires_at.hour == expected_expires_at.hour
     assert response.expires_at.minute == expected_expires_at.minute
 
-    response = MoneyButton.auth_as_application!(@client_id, @client_secret)
+    {:ok, response} = MoneyButton.auth_as_application(@client_id, @client_secret)
     %MoneyButton.AccessToken{} = response
 
     assert response.scope == :application_write
@@ -122,6 +102,61 @@ defmodule MoneyButtonTest do
     %MoneyButton.AccessToken{} = response
 
     assert response.scope == :application_write
+    assert response.token_type == :bearer
+
+    assert response.token ==
+             "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"
+
+    expected_expires_at = DateTime.from_unix!(:os.system_time(:second) + 3600)
+    assert response.expires_at.year == expected_expires_at.year
+    assert response.expires_at.month == expected_expires_at.month
+    assert response.expires_at.day == expected_expires_at.day
+    assert response.expires_at.hour == expected_expires_at.hour
+    assert response.expires_at.minute == expected_expires_at.minute
+  end
+
+  test_with_mock "auth_as_user/3", HTTPoison,
+    post: fn
+      "https://www.moneybutton.com/oauth/v1/token",
+      "client_id=aWiYcnE8XArAOz9F8eC69HYPgebLQ7CnlSRkRDDgHiNeOfM1MPCnbCP3i3w4lXf1&code=very_secret_code&grant_type=authorization_code&redirect_uri=https%3A%2F%2Fwww.example.com%2Flogin",
+      [{"Content-Type", "application/x-www-form-urlencoded"}] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "access_token" =>
+                 "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw",
+               "expires_in" => 3600,
+               "scope" => "auth.user_identity:read",
+               "token_type" => "Bearer"
+             })
+         }}
+    end do
+    response =
+      MoneyButton.auth_as_user!(@client_id, "very_secret_code", "https://www.example.com/login")
+
+    %MoneyButton.AccessToken{} = response
+
+    assert response.scope == :user_identity
+    assert response.token_type == :bearer
+
+    assert response.token ==
+             "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"
+
+    expected_expires_at = DateTime.from_unix!(:os.system_time(:second) + 3600)
+    assert response.expires_at.year == expected_expires_at.year
+    assert response.expires_at.month == expected_expires_at.month
+    assert response.expires_at.day == expected_expires_at.day
+    assert response.expires_at.hour == expected_expires_at.hour
+    assert response.expires_at.minute == expected_expires_at.minute
+
+    {:ok, response} =
+      MoneyButton.auth_as_user(@client_id, "very_secret_code", "https://www.example.com/login")
+
+    %MoneyButton.AccessToken{} = response
+
+    assert response.scope == :user_identity
     assert response.token_type == :bearer
 
     assert response.token ==
