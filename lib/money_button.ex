@@ -7,7 +7,7 @@ defmodule MoneyButton do
   alias MoneyButton.AccessToken
   alias MoneyButton.Payment
 
-  @url "https://www.moneybutton.com/"
+  @url "https://www.moneybutton.com"
 
   @doc """
   Authenticate as an application.

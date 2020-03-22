@@ -39,6 +39,7 @@ defmodule MoneyButton.MixProject do
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
+      {:mock, "~> 0.3.4"},
       {:httpoison, "~> 1.6"},
       {:jason, "~> 1.2"}
     ]
