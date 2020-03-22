@@ -217,7 +217,7 @@ defmodule MoneyButton do
   Get a user profile.
   """
   @spec get_profile(MoneyButton.AccessToken.t(), non_neg_integer()) ::
-          {:ok, Identity.t()} | {:error, String.t()}
+          {:ok, Profile.t()} | {:error, String.t()}
   def get_profile(%AccessToken{} = access_token, user_id) do
     {:ok, get_profile!(access_token, user_id)}
   rescue
@@ -230,7 +230,7 @@ defmodule MoneyButton do
 
   This function will raise an exception in case of an error.
   """
-  @spec get_balance!(AccessToken.t(), non_neg_integer()) :: Profile.t()
+  @spec get_balance!(AccessToken.t(), non_neg_integer()) :: Balance.t()
   def get_balance!(%AccessToken{token: token}, user_id) do
     {:ok, %HTTPoison.Response{status_code: 200, body: data}} =
       HTTPoison.get(
@@ -251,7 +251,7 @@ defmodule MoneyButton do
   Get a user balance.
   """
   @spec get_balance(MoneyButton.AccessToken.t(), non_neg_integer()) ::
-          {:ok, Identity.t()} | {:error, String.t()}
+          {:ok, Balance.t()} | {:error, String.t()}
   def get_balance(%AccessToken{} = access_token, user_id) do
     {:ok, get_balance!(access_token, user_id)}
   rescue

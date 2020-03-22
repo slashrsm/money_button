@@ -51,7 +51,7 @@ defmodule MoneyButtonTest do
     response = MoneyButton.auth_as_application!(@client_id, @client_secret)
     %MoneyButton.AccessToken{} = response
 
-    assert response.scope == :application_write
+    assert response.scope == [:application_write]
     assert response.token_type == :bearer
 
     assert response.token ==
@@ -67,7 +67,7 @@ defmodule MoneyButtonTest do
     {:ok, response} = MoneyButton.auth_as_application(@client_id, @client_secret)
     %MoneyButton.AccessToken{} = response
 
-    assert response.scope == :application_write
+    assert response.scope == [:application_write]
     assert response.token_type == :bearer
 
     assert response.token ==
@@ -83,7 +83,7 @@ defmodule MoneyButtonTest do
     {:ok, response} = MoneyButton.auth_as_application(@client_id, @client_secret, :payments_read)
     %MoneyButton.AccessToken{} = response
 
-    assert response.scope == :payments_read
+    assert response.scope == [:payments_read]
     assert response.token_type == :bearer
 
     assert response.token ==
@@ -101,7 +101,7 @@ defmodule MoneyButtonTest do
 
     %MoneyButton.AccessToken{} = response
 
-    assert response.scope == :application_write
+    assert response.scope == [:application_write]
     assert response.token_type == :bearer
 
     assert response.token ==
@@ -138,7 +138,7 @@ defmodule MoneyButtonTest do
 
     %MoneyButton.AccessToken{} = response
 
-    assert response.scope == :user_identity
+    assert response.scope == [:user_identity]
     assert response.token_type == :bearer
 
     assert response.token ==
@@ -156,7 +156,7 @@ defmodule MoneyButtonTest do
 
     %MoneyButton.AccessToken{} = response
 
-    assert response.scope == :user_identity
+    assert response.scope == [:user_identity]
     assert response.token_type == :bearer
 
     assert response.token ==
