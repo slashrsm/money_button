@@ -6,6 +6,7 @@ defmodule MoneyButton do
   alias MoneyButton.AuthScope
   alias MoneyButton.AccessToken
   alias MoneyButton.Payment
+  alias MoneyButton.Identity
 
   @url "https://www.moneybutton.com"
 
@@ -122,6 +123,8 @@ defmodule MoneyButton do
 
   @doc """
   Get a payment for an application.
+
+  This function will raise an exception in case of an error.
   """
   @spec get_payment!(MoneyButton.AccessToken.t(), non_neg_integer()) :: Payment.t()
   def get_payment!(%AccessToken{token: token}, payment_id) when is_integer(payment_id) do
@@ -147,6 +150,40 @@ defmodule MoneyButton do
           {:ok, Payment.t()} | {:error, String.t()}
   def get_payment(%AccessToken{} = access_token, payment_id) do
     {:ok, get_payment!(access_token, payment_id)}
+  rescue
+    MatchError -> {:error, "Request failed."}
+    _ -> {:error, "Unable to process the response."}
+  end
+
+  @doc """
+  Get a user identity.
+
+  This function will raise an exception in case of an error.
+  """
+  @spec get_identity!(MoneyButton.AccessToken.t()) :: Identity.t()
+  def get_identity!(%AccessToken{token: token}) do
+    {:ok, %HTTPoison.Response{status_code: 200, body: data}} =
+      HTTPoison.get(
+        @url <> "/api/v1/auth/user_identity",
+        [
+          {"Authorization", "Bearer #{token}"},
+          {"Content-Type", "application/x-www-form-urlencoded"}
+        ]
+      )
+
+    data
+    |> Jason.decode!()
+    |> Map.get("data", %{})
+    |> Identity.create()
+  end
+
+  @doc """
+  Get a user identity.
+  """
+  @spec get_identity(MoneyButton.AccessToken.t()) ::
+          {:ok, Identity.t()} | {:error, String.t()}
+  def get_identity(%AccessToken{} = access_token) do
+    {:ok, get_identity!(access_token)}
   rescue
     MatchError -> {:error, "Request failed."}
     _ -> {:error, "Unable to process the response."}

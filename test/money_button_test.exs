@@ -550,4 +550,43 @@ defmodule MoneyButtonTest do
         10
       )
   end
+
+  test_with_mock "get_identity/1", HTTPoison,
+    get: fn
+      "https://www.moneybutton.com/api/v1/auth/user_identity",
+      [
+        {"Authorization",
+         "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"},
+        {"Content-Type", "application/x-www-form-urlencoded"}
+      ] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "data" => %{
+                 "attributes" => %{"id" => "99", "name" => "John Doe"},
+                 "id" => "99",
+                 "type" => "user_identities"
+               },
+               "jsonapi" => %{"version" => "1.0"}
+             })
+         }}
+    end do
+    access_token = %MoneyButton.AccessToken{
+      expires_at: DateTime.from_unix!(:os.system_time(:second) + 3600),
+      scope: :user_identity,
+      token:
+        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw",
+      token_type: :bearer
+    }
+
+    assert MoneyButton.get_identity!(access_token) == %MoneyButton.Identity{
+             id: 99,
+             name: "John Doe"
+           }
+
+    assert MoneyButton.get_identity(access_token) ==
+             {:ok, %MoneyButton.Identity{id: 99, name: "John Doe"}}
+  end
 end
