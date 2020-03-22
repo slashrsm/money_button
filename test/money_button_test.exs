@@ -589,4 +589,66 @@ defmodule MoneyButtonTest do
     assert MoneyButton.get_identity(access_token) ==
              {:ok, %MoneyButton.Identity{id: 99, name: "John Doe"}}
   end
+
+  test_with_mock "get_profile/2", HTTPoison,
+    get: fn
+      "https://www.moneybutton.com/api/v1/users/99/profile",
+      [
+        {"Authorization",
+         "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"},
+        {"Content-Type", "application/x-www-form-urlencoded"}
+      ] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "data" => %{
+                 "attributes" => %{
+                   "avatar-url" => "https://www.example.com/avatar.png",
+                   "bio" => "I like Money Button.",
+                   "created-at" => "2019-10-25T13:41:44.006Z",
+                   "default-currency" => "USD",
+                   "default-language" => "en",
+                   "name" => "John Doe",
+                   "primary-paymail" => "jd@moneybutton.com"
+                 },
+                 "id" => "99",
+                 "type" => "profiles"
+               }
+             })
+         }}
+    end do
+    access_token = %MoneyButton.AccessToken{
+      expires_at: DateTime.from_unix!(:os.system_time(:second) + 3600),
+      scope: :user_identity,
+      token:
+        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw",
+      token_type: :bearer
+    }
+
+    expected_profile = %MoneyButton.Profile{
+      avatar: %URI{
+        authority: "www.example.com",
+        fragment: nil,
+        host: "www.example.com",
+        path: "/avatar.png",
+        port: 443,
+        query: nil,
+        scheme: "https",
+        userinfo: nil
+      },
+      bio: "I like Money Button.",
+      created_at: ~U[2019-10-25 13:41:44.006Z],
+      default_currency: "USD",
+      default_language: "en",
+      id: 99,
+      name: "John Doe",
+      primary_paymail: "jd@moneybutton.com"
+    }
+
+    assert MoneyButton.get_profile!(access_token, 99) == expected_profile
+
+    assert MoneyButton.get_profile(access_token, 99) == {:ok, expected_profile}
+  end
 end

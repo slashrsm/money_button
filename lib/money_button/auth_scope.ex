@@ -3,7 +3,7 @@ defmodule MoneyButton.AuthScope do
   MoneyButton auth scope.
   """
 
-  @type t :: :application_write | :payments_read | :user_identity
+  @type t :: :application_write | :payments_read | :user_identity | :user_profile
 
   @doc """
   Converts auth scope from atom to string and vice-versa.
@@ -22,6 +22,10 @@ defmodule MoneyButton.AuthScope do
     "auth.user_identity:read"
     iex> MoneyButton.AuthScope.convert("auth.user_identity:read")
     :user_identity
+    iex> MoneyButton.AuthScope.convert(:user_profile)
+    "users.profiles:read"
+    iex> MoneyButton.AuthScope.convert("users.profiles:read")
+    :user_profile
   """
   @spec convert(String.t()) :: __MODULE__.t()
   @spec convert(__MODULE__.t()) :: String.t()
@@ -31,4 +35,6 @@ defmodule MoneyButton.AuthScope do
   def convert(:payments_read), do: "payments:read"
   def convert("auth.user_identity:read"), do: :user_identity
   def convert(:user_identity), do: "auth.user_identity:read"
+  def convert("users.profiles:read"), do: :user_profile
+  def convert(:user_profile), do: "users.profiles:read"
 end

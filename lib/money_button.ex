@@ -7,6 +7,7 @@ defmodule MoneyButton do
   alias MoneyButton.AccessToken
   alias MoneyButton.Payment
   alias MoneyButton.Identity
+  alias MoneyButton.Profile
 
   @url "https://www.moneybutton.com"
 
@@ -90,7 +91,7 @@ defmodule MoneyButton do
 
   This function will raise an exception in case of an error.
   """
-  @spec get_payments!(MoneyButton.AccessToken.t(), non_neg_integer(), non_neg_integer()) :: [
+  @spec get_payments!(AccessToken.t(), non_neg_integer(), non_neg_integer()) :: [
           Payment.t()
         ]
   def get_payments!(%AccessToken{token: token}, limit \\ 20, offset \\ 0) do
@@ -112,7 +113,7 @@ defmodule MoneyButton do
   @doc """
   Get all payments for an application.
   """
-  @spec get_payments(MoneyButton.AccessToken.t(), non_neg_integer(), non_neg_integer()) ::
+  @spec get_payments(AccessToken.t(), non_neg_integer(), non_neg_integer()) ::
           {:ok, [Payment.t()]} | {:error, String.t()}
   def get_payments(%AccessToken{} = access_token, limit \\ 20, offset \\ 0) do
     {:ok, get_payments!(access_token, limit, offset)}
@@ -126,7 +127,7 @@ defmodule MoneyButton do
 
   This function will raise an exception in case of an error.
   """
-  @spec get_payment!(MoneyButton.AccessToken.t(), non_neg_integer()) :: Payment.t()
+  @spec get_payment!(AccessToken.t(), non_neg_integer()) :: Payment.t()
   def get_payment!(%AccessToken{token: token}, payment_id) when is_integer(payment_id) do
     {:ok, %HTTPoison.Response{status_code: 200, body: payments}} =
       HTTPoison.get(
@@ -160,7 +161,7 @@ defmodule MoneyButton do
 
   This function will raise an exception in case of an error.
   """
-  @spec get_identity!(MoneyButton.AccessToken.t()) :: Identity.t()
+  @spec get_identity!(AccessToken.t()) :: Identity.t()
   def get_identity!(%AccessToken{token: token}) do
     {:ok, %HTTPoison.Response{status_code: 200, body: data}} =
       HTTPoison.get(
@@ -180,10 +181,44 @@ defmodule MoneyButton do
   @doc """
   Get a user identity.
   """
-  @spec get_identity(MoneyButton.AccessToken.t()) ::
+  @spec get_identity(AccessToken.t()) ::
           {:ok, Identity.t()} | {:error, String.t()}
   def get_identity(%AccessToken{} = access_token) do
     {:ok, get_identity!(access_token)}
+  rescue
+    MatchError -> {:error, "Request failed."}
+    _ -> {:error, "Unable to process the response."}
+  end
+
+  @doc """
+  Get a user profile.
+
+  This function will raise an exception in case of an error.
+  """
+  @spec get_profile!(AccessToken.t(), non_neg_integer()) :: Profile.t()
+  def get_profile!(%AccessToken{token: token}, user_id) do
+    {:ok, %HTTPoison.Response{status_code: 200, body: data}} =
+      HTTPoison.get(
+        @url <> "/api/v1/users/#{user_id}/profile",
+        [
+          {"Authorization", "Bearer #{token}"},
+          {"Content-Type", "application/x-www-form-urlencoded"}
+        ]
+      )
+
+    data
+    |> Jason.decode!()
+    |> Map.get("data", %{})
+    |> Profile.create()
+  end
+
+  @doc """
+  Get a user profile.
+  """
+  @spec get_profile(MoneyButton.AccessToken.t(), non_neg_integer()) ::
+          {:ok, Identity.t()} | {:error, String.t()}
+  def get_profile(%AccessToken{} = access_token, user_id) do
+    {:ok, get_profile!(access_token, user_id)}
   rescue
     MatchError -> {:error, "Request failed."}
     _ -> {:error, "Unable to process the response."}
