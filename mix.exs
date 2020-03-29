@@ -8,7 +8,6 @@ defmodule MoneyButton.MixProject do
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_options: [warnings_as_errors: true],
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
         ignore_warnings: ".dialyzer_ignore.exs"
@@ -38,6 +37,7 @@ defmodule MoneyButton.MixProject do
       {:dialyxir, ">= 0.0.0", only: :dev, runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
+      {:plug, "~> 1.10", only: :test},
       {:excoveralls, "~> 0.10", only: :test},
       {:mock, "~> 0.3.4"},
       {:httpoison, "~> 1.6"},
