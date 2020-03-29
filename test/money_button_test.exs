@@ -652,6 +652,87 @@ defmodule MoneyButtonTest do
     assert MoneyButton.get_profile(access_token, 99) == {:ok, expected_profile}
   end
 
+  test_with_mock "get_profile/2 with default arguments", HTTPoison,
+    get: fn
+      "https://www.moneybutton.com/api/v1/users/99/profile",
+      [
+        {"Authorization",
+         "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"},
+        {"Content-Type", "application/x-www-form-urlencoded"}
+      ] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "data" => %{
+                 "attributes" => %{
+                   "avatar-url" => "https://www.example.com/avatar.png",
+                   "bio" => "I like Money Button.",
+                   "created-at" => "2019-10-25T13:41:44.006Z",
+                   "default-currency" => "USD",
+                   "default-language" => "en",
+                   "name" => "John Doe",
+                   "primary-paymail" => "jd@moneybutton.com"
+                 },
+                 "id" => "99",
+                 "type" => "profiles"
+               }
+             })
+         }}
+
+      "https://www.moneybutton.com/api/v1/auth/user_identity",
+      [
+        {"Authorization",
+         "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"},
+        {"Content-Type", "application/x-www-form-urlencoded"}
+      ] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "data" => %{
+                 "attributes" => %{"id" => "99", "name" => "John Doe"},
+                 "id" => "99",
+                 "type" => "user_identities"
+               },
+               "jsonapi" => %{"version" => "1.0"}
+             })
+         }}
+    end do
+    access_token = %MoneyButton.AccessToken{
+      expires_at: DateTime.from_unix!(:os.system_time(:second) + 3600),
+      scope: :user_identity,
+      token:
+        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw",
+      token_type: :bearer
+    }
+
+    expected_profile = %MoneyButton.Profile{
+      avatar: %URI{
+        authority: "www.example.com",
+        fragment: nil,
+        host: "www.example.com",
+        path: "/avatar.png",
+        port: 443,
+        query: nil,
+        scheme: "https",
+        userinfo: nil
+      },
+      bio: "I like Money Button.",
+      created_at: ~U[2019-10-25 13:41:44.006Z],
+      default_currency: "USD",
+      default_language: "en",
+      id: 99,
+      name: "John Doe",
+      primary_paymail: "jd@moneybutton.com"
+    }
+
+    assert MoneyButton.get_profile!(access_token) == expected_profile
+    assert MoneyButton.get_profile(access_token) == {:ok, expected_profile}
+  end
+
   test_with_mock "get_balance/2", HTTPoison,
     get: fn
       "https://www.moneybutton.com/api/v1/users/99/balance",
@@ -694,5 +775,69 @@ defmodule MoneyButtonTest do
     assert MoneyButton.get_balance!(access_token, 99) == expected_balance
 
     assert MoneyButton.get_balance(access_token, 99) == {:ok, expected_balance}
+  end
+
+  test_with_mock "get_balance/2 with default arguments", HTTPoison,
+    get: fn
+      "https://www.moneybutton.com/api/v1/users/99/balance",
+      [
+        {"Authorization",
+         "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"},
+        {"Content-Type", "application/x-www-form-urlencoded"}
+      ] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "data" => %{
+                 "attributes" => %{
+                   "amount" => 12.3456,
+                   "currency" => "USD",
+                   "satoshis" => "67890"
+                 },
+                 "id" => "fa7f9720-c51d-11e9-8504-8bc4464406ab",
+                 "type" => "amounts"
+               }
+             })
+         }}
+
+      "https://www.moneybutton.com/api/v1/auth/user_identity",
+      [
+        {"Authorization",
+         "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw"},
+        {"Content-Type", "application/x-www-form-urlencoded"}
+      ] ->
+        {:ok,
+         %HTTPoison.Response{
+           status_code: 200,
+           body:
+             Jason.encode!(%{
+               "data" => %{
+                 "attributes" => %{"id" => "99", "name" => "John Doe"},
+                 "id" => "99",
+                 "type" => "user_identities"
+               },
+               "jsonapi" => %{"version" => "1.0"}
+             })
+         }}
+    end do
+    access_token = %MoneyButton.AccessToken{
+      expires_at: DateTime.from_unix!(:os.system_time(:second) + 3600),
+      scope: :user_identity,
+      token:
+        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OGJlYWVlYzJkMWM4ZGVlMDJjMmI3MTM1YWVmMzllMyIsImV4cCI6MTU4NDkwOTMxMCwic2NvcGUiOiJhcHBsaWNhdGlvbl9hY2Nlc3M6d3JpdGUifQ.3ruUKTJ_DwbnR-E06KU5pjMoFTH9cgwf7d6tnqpytYw",
+      token_type: :bearer
+    }
+
+    expected_balance = %MoneyButton.Balance{
+      amount: 12.3456,
+      currency: "USD",
+      satoshis: 67_890
+    }
+
+    assert MoneyButton.get_balance!(access_token) == expected_balance
+
+    assert MoneyButton.get_balance(access_token) == {:ok, expected_balance}
   end
 end

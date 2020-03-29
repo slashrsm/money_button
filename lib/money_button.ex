@@ -196,13 +196,15 @@ defmodule MoneyButton do
 
   This function will raise an exception in case of an error.
   """
-  @spec get_profile!(AccessToken.t(), non_neg_integer()) :: Profile.t()
-  def get_profile!(%AccessToken{token: token}, user_id) do
+  @spec get_profile!(AccessToken.t(), non_neg_integer() | nil) :: Profile.t()
+  def get_profile!(%AccessToken{} = token, user_id \\ nil) do
+    calculated_user_id = user_id || get_identity!(token).id
+
     {:ok, %HTTPoison.Response{status_code: 200, body: data}} =
       HTTPoison.get(
-        @url <> "/api/v1/users/#{user_id}/profile",
+        @url <> "/api/v1/users/#{calculated_user_id}/profile",
         [
-          {"Authorization", "Bearer #{token}"},
+          {"Authorization", "Bearer #{token.token}"},
           {"Content-Type", "application/x-www-form-urlencoded"}
         ]
       )
@@ -216,9 +218,9 @@ defmodule MoneyButton do
   @doc """
   Get a user profile.
   """
-  @spec get_profile(MoneyButton.AccessToken.t(), non_neg_integer()) ::
+  @spec get_profile(MoneyButton.AccessToken.t(), non_neg_integer() | nil) ::
           {:ok, Profile.t()} | {:error, String.t()}
-  def get_profile(%AccessToken{} = access_token, user_id) do
+  def get_profile(%AccessToken{} = access_token, user_id \\ nil) do
     {:ok, get_profile!(access_token, user_id)}
   rescue
     MatchError -> {:error, "Request failed."}
@@ -230,13 +232,15 @@ defmodule MoneyButton do
 
   This function will raise an exception in case of an error.
   """
-  @spec get_balance!(AccessToken.t(), non_neg_integer()) :: Balance.t()
-  def get_balance!(%AccessToken{token: token}, user_id) do
+  @spec get_balance!(AccessToken.t(), non_neg_integer() | nil) :: Balance.t()
+  def get_balance!(%AccessToken{} = token, user_id \\ nil) do
+    calculated_user_id = user_id || get_identity!(token).id
+
     {:ok, %HTTPoison.Response{status_code: 200, body: data}} =
       HTTPoison.get(
-        @url <> "/api/v1/users/#{user_id}/balance",
+        @url <> "/api/v1/users/#{calculated_user_id}/balance",
         [
-          {"Authorization", "Bearer #{token}"},
+          {"Authorization", "Bearer #{token.token}"},
           {"Content-Type", "application/x-www-form-urlencoded"}
         ]
       )
@@ -250,9 +254,9 @@ defmodule MoneyButton do
   @doc """
   Get a user balance.
   """
-  @spec get_balance(MoneyButton.AccessToken.t(), non_neg_integer()) ::
+  @spec get_balance(MoneyButton.AccessToken.t(), non_neg_integer() | nil) ::
           {:ok, Balance.t()} | {:error, String.t()}
-  def get_balance(%AccessToken{} = access_token, user_id) do
+  def get_balance(%AccessToken{} = access_token, user_id \\ nil) do
     {:ok, get_balance!(access_token, user_id)}
   rescue
     MatchError -> {:error, "Request failed."}
