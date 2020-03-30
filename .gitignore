@@ -24,3 +24,5 @@ money_button-*.tar
 
 # Ignore Visual Studio Code stuff.
 .elixir_ls
+
+priv/plts

@@ -22,39 +22,43 @@ defmodule MoneyButton.Webhook do
   socket with an overall limit of 8_000_000 bytes.
   """
 
-  alias MoneyButton.Payment
+  if Code.ensure_loaded?(Plug.Parsers) do
+    @behaviour Plug.Parsers
 
-  @behaviour Plug.Parsers
-
-  def init(opts) do
-    {secret, opts} = Keyword.pop(opts, :secret)
-    {strict, opts} = Keyword.pop(opts, :strict, false)
-    {body_reader, opts} = Keyword.pop(opts, :body_reader, {Plug.Conn, :read_body, []})
-    {body_reader, secret, strict, opts}
-  end
-
-  def parse(conn, "application", "json", _headers, {{mod, fun, args}, expected_secret, strict, opts}) do
-    with {:ok, body, conn} <- apply(mod, fun, [conn, opts | args]),
-      {:ok, %{"secret" => actual_secret, "payment" => raw_payment}} <- Jason.decode(body),
-      payment <- Payment.create(raw_payment) do
-
-      if actual_secret == expected_secret do
-        {:ok, payment, conn}
-      else
-        {:ok, %{}, conn |> Plug.Conn.send_resp(403, "Forbidden!")}
-      end
-
-    else
-      _ ->
-        if strict do
-          {:ok, %{}, conn |> Plug.Conn.send_resp(403, "Forbidden!")}
-        else
-          {:next, conn}
-        end
+    def init(opts) do
+      {secret, opts} = Keyword.pop(opts, :secret)
+      {strict, opts} = Keyword.pop(opts, :strict, false)
+      {body_reader, opts} = Keyword.pop(opts, :body_reader, {Plug.Conn, :read_body, []})
+      {body_reader, secret, strict, opts}
     end
-  end
 
-  def parse(conn, _type, _subtype, _headers, _options) do
-    {:next, conn}
+    def parse(
+          conn,
+          "application",
+          "json",
+          _headers,
+          {{mod, fun, args}, expected_secret, strict, opts}
+        ) do
+      with {:ok, body, conn} <- apply(mod, fun, [conn, opts | args]),
+           {:ok, %{"secret" => actual_secret, "payment" => raw_payment}} <- Jason.decode(body),
+           payment <- MoneyButton.Payment.create(raw_payment) do
+        if actual_secret == expected_secret do
+          {:ok, payment, conn}
+        else
+          {:ok, %{}, conn |> Plug.Conn.send_resp(403, "Forbidden!")}
+        end
+      else
+        _ ->
+          if strict do
+            {:ok, %{}, conn |> Plug.Conn.send_resp(403, "Forbidden!")}
+          else
+            {:next, conn}
+          end
+      end
+    end
+
+    def parse(conn, _type, _subtype, _headers, _options) do
+      {:next, conn}
+    end
   end
 end

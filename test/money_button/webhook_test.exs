@@ -52,7 +52,8 @@ defmodule MoneyButton.WebhookTest do
   end
 
   test "parses the request body" do
-    %Plug.Conn{body_params: payment} = Jason.encode!(%{"secret" => @secret, "payment" => @raw_payment}) |> json_conn() |> parse()
+    %Plug.Conn{body_params: payment} =
+      Jason.encode!(%{"secret" => @secret, "payment" => @raw_payment}) |> json_conn() |> parse()
 
     %MoneyButton.Payment{} = payment
 
@@ -104,7 +105,9 @@ defmodule MoneyButton.WebhookTest do
   end
 
   test "wrong secret" do
-    conn = Jason.encode!(%{"secret" => "wrong", "payment" => @raw_payment}) |> json_conn() |> parse()
+    conn =
+      Jason.encode!(%{"secret" => "wrong", "payment" => @raw_payment}) |> json_conn() |> parse()
+
     assert conn.status == 403
     assert conn.resp_body == "Forbidden!"
     assert conn.state == :sent
